@@ -1,6 +1,6 @@
 # react-native-audio-android
 
-A simple audio recorder for your react native app! 
+A simple audio recorder for your react native app!  Wrap it.
 
 ##Installation
 

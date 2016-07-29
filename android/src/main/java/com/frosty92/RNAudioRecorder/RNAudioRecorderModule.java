@@ -16,7 +16,6 @@ import java.io.*;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import android.content.Intent;
 import android.content.Context;
@@ -32,45 +31,43 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
 
     public RNAudioRecorderModule(ReactApplicationContext reactContext) {
         super(reactContext);
-        _reactContext = reactContext;      
+        _reactContext = reactContext;
     }
     @Override
     public String getName() {
         return "RNAudioRecorder";
     }
 
-    private void setFileName() {
+    private String setFileName(String name, String suffix) {
         audioFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        audioFileName += "/" + "AUDIO_:" +timeStamp + ".3gp";
+        audioFileName += "/" + name + "." + suffix;
+        return audioFileName;
     }
 
-    private boolean prepareAudioRecorder() {
+    @ReactMethod
+    public void prepareAudioRecorder(final String name, final String suffix, final Callback result) {
         audioRecorder = new MediaRecorder();
         audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        setFileName();
+        String path = setFileName(name, suffix);
         audioRecorder.setOutputFile(audioFileName);
         audioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
         try {
             audioRecorder.prepare();
-            return true;
+            result.invoke(true, path);
         } catch (IOException e) {
-            return false;
-        }           
+            result.invoke(false, path);
+        }
     }
+
     @ReactMethod
     public void startAudioRecording(final Callback successCallback, final Callback errorCallback) {
         if (audioRecorderCallback == null) {
-            if (prepareAudioRecorder()) {
-                try {
-                    audioRecorder.start();
-                    audioRecorderCallback = successCallback;
-                } catch (final Exception e) {
-                    errorCallback.invoke("error: unable to invoke audioRecorder.start(): " + e.getMessage());
-                }  
-            } else {
-                errorCallback.invoke("AudioRecorder returned false");
+            try {
+                audioRecorder.start();
+                audioRecorderCallback = successCallback;
+            } catch (final Exception e) {
+                errorCallback.invoke("error: unable to invoke audioRecorder.start(): " + e.getMessage());
             }
         } else {
             errorCallback.invoke("AudioRecorderCallback was not null");
